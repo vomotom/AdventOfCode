@@ -65,11 +65,6 @@ class SafeLock
     {
         string pattern = @"^[LR]\d+$";
         return Regex.IsMatch(rotation.Trim(), pattern, RegexOptions.IgnoreCase);
-    }    
-
-    private void PrintState()
-    {
-       
     }
 }
 
