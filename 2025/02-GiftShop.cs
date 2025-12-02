@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 
-var part1 = new InvalidIdAdder(1, File.ReadAllText("02-Input.txt"));
-var part2 = new InvalidIdAdder(2, File.ReadAllText("02-Input.txt"));
+var part1 = new InvalidIdAdder(1, File.ReadAllText("Inputs/02.txt"));
+var part2 = new InvalidIdAdder(2, File.ReadAllText("Inputs/02.txt"));
 
 class InvalidIdAdder
 {
