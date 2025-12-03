@@ -1,38 +1,36 @@
-using System.Text.RegularExpressions;
-
-
 var giftshop = new GiftShop(LoadRanges("Inputs/02.txt"));
-Console.WriteLine($"InvalidIdSum (check for repeats of two): {giftshop.SumInvalidIds(true)}");
-Console.WriteLine($"InvalidIdSum (check all possible repeats): {giftshop.SumInvalidIds(false)}");
+Console.WriteLine($"InvalidIdSum (check for repeats of two): {giftshop.SumInvalidIds(RepeatCheckMode.HalvesOnly)}");
+Console.WriteLine($"InvalidIdSum (check all possible repeats): {giftshop.SumInvalidIds(RepeatCheckMode.AllFactors)}");
 
-static IEnumerable<Range> LoadRanges(string filePath) =>
+static IEnumerable<IdRange> LoadRanges(string filePath) =>
     File.ReadAllText(filePath).Split(",")
-        .Select(row => new Range(
-            Int64.Parse(row.Split("-")[0]), 
-            Int64.Parse(row.Split("-")[1])
+        .Select(row => new IdRange(
+            long.Parse(row.Split("-")[0]), 
+            long.Parse(row.Split("-")[1])
             ));
 
-class Range(long start, long end)
+
+class IdRange(long start, long end)
 {
     public long Start { get; } = start;
     public long End { get; } = end;
 
-    public long SumInvalidIds(bool checkHalfsOnly=false)
+    public long SumInvalidIds(RepeatCheckMode mode=RepeatCheckMode.AllFactors)
     {
         var sum = 0L;
         for (long id = Start; id <= End; id++)
         {
-            if (!IdValid(id, checkHalfsOnly)) sum += id;
+            if (!IdValid(id, mode)) sum += id;
         }
         return sum;      
     }
 
-    bool IdValid(long id, bool checkHalfsOnly=false)
+    public bool IdValid(long id, RepeatCheckMode mode=RepeatCheckMode.AllFactors)
     {
         var idString = id.ToString();
         var length = idString.Length;
-        if (checkHalfsOnly && length % 2 != 0) return true;
-        var factors = checkHalfsOnly ? new List<int> { 2 } : LengthFactors(length);
+        if (mode == RepeatCheckMode.HalvesOnly && length % 2 != 0) return true;
+        var factors = (mode == RepeatCheckMode.HalvesOnly) ? new List<int> { 2 } : LengthFactors(length);
 
         // checks all relevant variants of spliting the string evenly - by factors of the string's length
         // f.e. string length is 12 -> checks splitting to 2, 3, 4, 6 and 12 parts
@@ -54,7 +52,7 @@ class Range(long start, long end)
         return true;
     }
 
-    public List<int> LengthFactors(int length)
+    public IEnumerable<int> LengthFactors(int length)
     {
         var factors = new List<int>();
         for (int factor = 2; factor <= length; factor++)
@@ -65,10 +63,16 @@ class Range(long start, long end)
     }
 }
 
-class GiftShop(IEnumerable<Range> ranges)
+class GiftShop(IEnumerable<IdRange> ranges)
 {
-    public List<Range> Ranges { get; } = ranges.ToList();
+    public List<IdRange> Ranges { get; } = ranges.ToList();
 
-    public double SumInvalidIds(bool checkHalfsOnly=false) =>
-        Ranges.Sum(range => range.SumInvalidIds(checkHalfsOnly));
+    public long SumInvalidIds(RepeatCheckMode mode=RepeatCheckMode.AllFactors) =>
+        Ranges.Sum(range => range.SumInvalidIds(mode));
+}
+
+enum RepeatCheckMode
+{
+    HalvesOnly,
+    AllFactors
 }
