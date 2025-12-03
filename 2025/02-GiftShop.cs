@@ -1,48 +1,42 @@
 using System.Text.RegularExpressions;
 
-var part1 = new InvalidIdAdder(1, File.ReadAllText("Inputs/02.txt"));
-var part2 = new InvalidIdAdder(2, File.ReadAllText("Inputs/02.txt"));
 
-class InvalidIdAdder
+var giftshop = new GiftShop(LoadRanges("Inputs/02.txt"));
+Console.WriteLine($"InvalidIdSum (check for repeats of two): {giftshop.SumInvalidIds(true)}");
+Console.WriteLine($"InvalidIdSum (check all possible repeats): {giftshop.SumInvalidIds(false)}");
+
+static IEnumerable<Range> LoadRanges(string filePath) =>
+    File.ReadAllText(filePath).Split(",")
+        .Select(row => new Range(
+            Int64.Parse(row.Split("-")[0]), 
+            Int64.Parse(row.Split("-")[1])
+            ));
+
+class Range(long start, long end)
 {
-    public string[] Ranges { get; init; }
-    public List<long> InvalidIds { get; set; } = new List<long>();
-    public int Part { get; set; }
+    public long Start { get; } = start;
+    public long End { get; } = end;
 
-    public InvalidIdAdder(int part, string input)
+    public long SumInvalidIds(bool checkHalfsOnly=false)
     {
-        Part = part;
-        Ranges = input.Split(',');
-
-        foreach(string range in Ranges) FindInvalidIds(range.Trim());
-        Console.WriteLine($"Part {Part} Result: {InvalidIds.Sum()}");
+        var sum = 0L;
+        for (long id = Start; id <= End; id++)
+        {
+            if (!IdValid(id, checkHalfsOnly)) sum += id;
+        }
+        return sum;      
     }
 
-    public bool RangeValid(string range)
-    {
-        string pattern = @"\A\d+-\d+\Z";
-        return Regex.IsMatch(range.Trim(), pattern);
-    }
-
-    public bool Part1IdValid(long id)
+    bool IdValid(long id, bool checkHalfsOnly=false)
     {
         var idString = id.ToString();
         var length = idString.Length;
-        if (length % 2 != 0) return true;
-
-        var firstHalf = idString.Substring(0, length / 2);
-        var secondHalf = idString.Substring(length / 2);
-        return firstHalf != secondHalf;
-    }
-
-    public bool Part2IdValid(long id)
-    {
-        var idString = id.ToString();
-        var length = idString.Length;
+        if (checkHalfsOnly && length % 2 != 0) return true;
+        var factors = checkHalfsOnly ? new List<int> { 2 } : LengthFactors(length);
 
         // checks all relevant variants of spliting the string evenly - by factors of the string's length
         // f.e. string length is 12 -> checks splitting to 2, 3, 4, 6 and 12 parts
-        foreach (int factor in LengthFactors(length))
+        foreach (int factor in factors)
         {
             var parts = new List<string>();
             for (int i = 0; i < factor; i++)
@@ -69,25 +63,12 @@ class InvalidIdAdder
         }
         return factors;
     }
+}
 
-    public void FindInvalidIds(string range)
-    {
-        if (RangeValid(range))
-        {
-            string[] ranges = range.Split('-');
-            var floor = Int64.Parse(ranges[0]);
-            var ceilling = Int64.Parse(ranges[1]);
+class GiftShop(IEnumerable<Range> ranges)
+{
+    public List<Range> Ranges { get; } = ranges.ToList();
 
-            for (long id = floor; id <= ceilling; id++)
-            {
-                var idValid = (Part == 1) ? !Part1IdValid(id) : !Part2IdValid(id);
-                if (idValid) InvalidIds.Add(id);
-            }
-        }
-        else
-        {
-            throw new ArgumentException($"{range} is not a valid range");
-        }
-    }
-
+    public double SumInvalidIds(bool checkHalfsOnly=false) =>
+        Ranges.Sum(range => range.SumInvalidIds(checkHalfsOnly));
 }
